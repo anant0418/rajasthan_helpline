@@ -1,0 +1,56 @@
+name: Publish websites
+
+# Publishes every apps/<name>/ folder that has an index.html to GitHub Pages
+# at https://<user>.github.io/<repo>/<name>/
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect websites
+        run: |
+          mkdir -p _site
+          {
+            echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+            echo '<meta name="viewport" content="width=device-width, initial-scale=1"><title>rajasthan_helpline</title>'
+            echo '<style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px}a{color:#1a73e8}</style>'
+            echo '</head><body><h1>Rajasthan Helpline apps</h1><ul>'
+          } > _site/index.html
+          for dir in apps/*/; do
+            name=$(basename "$dir")
+            if [ -f "$dir/index.html" ]; then
+              mkdir -p "_site/$name"
+              rsync -a --exclude 'README.md' "$dir" "_site/$name/"
+              echo "<li><a href=\"$name/\">$name</a></li>" >> _site/index.html
+            fi
+          done
+          echo '</ul></body></html>' >> _site/index.html
+          ls -R _site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
