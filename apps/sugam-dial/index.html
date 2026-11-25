@@ -276,7 +276,7 @@ const REGIONS={
   'DGM Kota':['Tonk','Baran'],
   'DGM (Admin)':['Sawai Madhopur','Jhunjhunu']
 };
-const GROUPS=[['TOP','Top officers'],['DGM','DGM'],['PD','Project Directors'],['SPL','Electrical, QC and Expressway'],['HQ','Head office staff'],['Other','Added by you']];
+const GROUPS=[['TOP','Top officers'],['DGM','DGM'],['PD','Project Directors'],['SPL','Electrical, QC and Expressway'],['HQ','Head office staff'],['DIST','Collectors and Divisional Commissioners'],['HOD','Heads of department'],['SECT','Secretariat'],['VID','Vidhan Sabha'],['DEL','New Delhi offices'],['Other','Added by you']];
 /* Higher rank first. Same rank keeps the list's own order (PDs: by district). */
 const RANK=[[/^Chairman/,1],[/^Vice Chairman/,2],[/^Managing Director/,3],[/^(CFO|General Manager|Chief Architect)/,4],[/^CPM/,5],[/^DGM/,6],[/^PD/,7],[/^(Sr\. A\.O|Consultant)/,8],[/^Manager/,9],[/^PA/,10]];
 const rankOf=name=>{for(const [re,r] of RANK)if(re.test(name))return r;return 11};
@@ -430,14 +430,17 @@ backup:'M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 
 restore:'M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z',
 people:'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'
 });
-const GNAME={TOP:'Top officers',DGM:'DGM',PD:'Project Directors',SPL:'Electrical, QC and Expressway',HQ:'Head office staff',Other:'Added by you'};
+const GNAME={TOP:'Top officers',DGM:'DGM',PD:'Project Directors',SPL:'Electrical, QC and Expressway',HQ:'Head office staff',DIST:'Collectors and Divisional Commissioners',HOD:'Heads of department',SECT:'Secretariat',VID:'Vidhan Sabha',DEL:'New Delhi offices',Other:'Added by you'};
+let GOV_SRC='';
+const SRCNAME={rsrdc:'RSRDC list (2026)',Secratriat:'Secretariat directory (2020)',DC:'State directory (Collectors, HODs, Delhi)'};
+const GOVNOTE='Read automatically from a scanned copy of a government directory, so a name may be jumbled and the person may have moved. Check before relying on it.';
 const COLORS=['#4285f4','#e37400','#188038','#a142f4','#d93025','#12a4af','#b06000'];
 const isPhone=()=>matchMedia('(max-width:899px)').matches;
 const title=o=>o.person||o.name;
-const initialOf=o=>(title(o).replace(/^(Sh\.|Smt\.|Hon'ble Dy\. CM|Hon’ble Dy\. CM)\s*/i,'').trim()[0]||'?').toUpperCase();
+const initialOf=o=>{const t=title(o).replace(/^(?:(?:Sh\.|Smt\.|Hon'ble Dy\. CM|Hon’ble Dy\. CM|श्रीमती|श्री|सुश्री|कुमारी|कु\.|डॉ\.?|डा\.)\s*)+/i,'').trim();const m=t.match(/^[\u0905-\u0939\u0958-\u0961]|^./u);return (m?m[0]:'?').toUpperCase()};
 const colorOf=o=>{let h=0;for(const ch of o.id)h=(h*31+ch.charCodeAt(0))>>>0;return COLORS[h%COLORS.length]};
 const avatar=(o,cls='')=>`<span class="av ${cls}" style="background:${colorOf(o)}" aria-hidden="true">${esc(initialOf(o))}</span>`;
-const distLabel=o=>o.region?o.dists.length+' districts':(D.byId[o.distId]?.name||'');
+const distLabel=o=>o.region?o.dists.length+' districts':o.dists.length?(D.byId[o.distId]?.name||''):o.gov?({SECT:'Secretariat, Jaipur',HOD:'Jaipur',VID:'Vidhan Sabha, Jaipur',DEL:'New Delhi',DIST:''}[o.level]||''):(D.byId[o.distId]?.name||'');
 const isStar=o=>S.starred.includes(o.id);
 const allContacts=()=>Object.values(D.offices).filter(o=>!S.hidden.includes(o.id));
 
@@ -470,10 +473,11 @@ function pool(f){
   if(f==='star')return all.filter(isStar);
   if(f.startsWith('d:')){const id=f.slice(2);return all.filter(o=>o.dists.includes(id))}
   if(f.startsWith('g:')){const g=f.slice(2);return all.filter(o=>o.level===g)}
+  if(f.startsWith('src:')){const x=f.slice(4);return all.filter(o=>x==='rsrdc'?(!o.gov&&!o.custom):o.src===x)}
   return all;
 }
-const fName=f=>f==='all'?'Contacts':f==='mine'?'My districts':f==='star'?'Starred':f.startsWith('d:')?(D.byId[f.slice(2)]?.name||''):GNAME[f.slice(2)]||'';
-const matches=(o,q)=>!q||(o.name+' '+o.person+' '+o.dists.map(i=>D.byId[i].name).join(' ')+' '+o.numbers.map(x=>x.n.replace(/\s/g,'')).join(' ')+' '+ph(o).replace(/\s/g,'')).toLowerCase().includes(q.replace(/\s+/g,' '));
+const fName=f=>f==='all'?'Contacts':f==='mine'?'My districts':f==='star'?'Starred':f.startsWith('d:')?(D.byId[f.slice(2)]?.name||''):f.startsWith('src:')?SRCNAME[f.slice(4)]:GNAME[f.slice(2)]||'';
+const matches=(o,q)=>!q||(o.name+' '+o.person+' '+(o.dept||'')+' '+o.dists.map(i=>D.byId[i].name).join(' ')+' '+o.numbers.map(x=>x.n.replace(/\s/g,'')).join(' ')+' '+ph(o).replace(/\s/g,'')).toLowerCase().includes(q.replace(/\s+/g,' '));
 
 /* ---------- side navigation ---------- */
 function renderNav(){
@@ -490,9 +494,11 @@ function renderNav(){
    ${item('go','notes','Notes','note',S.notes.length||'',R.s==='notes',true)}
    <div class="nh"><span>Districts</span><button class="ib sm" data-a="mpick" aria-label="Choose districts">${ic('add','i s')}</button></div>
    ${favs.length?favs.map(d=>item('nav','d:'+d.id,d.name,'label',pool('d:'+d.id).length,f==='d:'+d.id&&!ui.q)).join(''):`<p class="small" style="padding:0 16px">Add your districts to see their contacts first.</p>`}
+   <div class="nh"><span>Directories</span></div>
+   ${['rsrdc','Secratriat','DC'].filter(x=>pool('src:'+x).length).map(x=>item('nav','src:'+x,SRCNAME[x],'label',pool('src:'+x).length,f==='src:'+x&&!ui.q)).join('')}
    <div class="nh"><span>Your data</span></div>
    ${item('backup','','Back up data','backup','',false)}${item('restore','','Restore backup','restore','',false)}
-   <p class="small" style="padding:12px 16px 0">${esc(SOURCE)}. Complaints, notes and photos stay on this device.</p>`;
+   <p class="small" style="padding:12px 16px 0">${esc(SOURCE)}${GOV_SRC?'; '+esc(GOV_SRC):''}. Complaints, notes and photos stay on this device.</p>`;
 }
 
 /* ---------- contact list ---------- */
@@ -515,11 +521,17 @@ function vList(){
   const list=found.filter(o=>!pf||o.level===pf);
   const starred=f==='star'?[]:list.filter(isStar).sort(byRank);
   const rest=list.filter(o=>f==='star'||!isStar(o));
-  const CHIP={TOP:'Top officers',DGM:'DGM',PD:'Project Directors',SPL:'Electrical & QC',HQ:'Head office',Other:'Added by you'};
+  const CHIP={TOP:'Top officers',DGM:'DGM',PD:'Project Directors',SPL:'Electrical & QC',HQ:'Head office',DIST:'Collectors',HOD:'Heads of dept.',SECT:'Secretariat',VID:'Vidhan Sabha',DEL:'Delhi',Other:'Added by you'};
   const head=q?`Results for “${esc(ui.q.trim())}”`:esc(fName(f));
-  let body='';
-  if(starred.length)body+=`<div class="sec">${ic('star','i xs')}Starred (${starred.length})</div>`+starred.map(rowHtml).join('');
-  for(const [g] of GROUPS){const rows=rest.filter(o=>o.level===g).sort(byRank);if(!rows.length)continue;body+=`<div class="sec">${esc(GNAME[g])} (${rows.length})</div>`+rows.map(rowHtml).join('')}
+  const secs=[];
+  if(starred.length)secs.push({h:`${ic('star','i xs')}Starred (${starred.length})`,rows:starred});
+  for(const [g] of GROUPS){const rows=rest.filter(o=>o.level===g).sort(byRank);if(!rows.length)continue;
+    if(g==='SECT'){const by=new Map();rows.slice().sort((a,b)=>a.idx-b.idx).forEach(o=>{if(!by.has(o.dept))by.set(o.dept,[]);by.get(o.dept).push(o)});
+      by.forEach((rs,dp)=>secs.push({h:`${esc(GNAME[g])} · ${esc(dp)} (${rs.length})`,rows:rs.sort(byRank)}))}
+    else secs.push({h:`${esc(GNAME[g])} (${rows.length})`,rows})}
+  const limit=ui.limit||250;let shown=0,body='';
+  for(const x of secs){if(shown>=limit)break;const take=x.rows.slice(0,limit-shown);shown+=take.length;body+=`<div class="sec">${x.h}</div>`+take.map(rowHtml).join('')}
+  if(list.length>shown)body+=`<div style="padding:16px 8px"><button class="tb" data-a="more">Show ${Math.min(500,list.length-shown)} more of ${list.length-shown}</button></div>`;
   if(!list.length)body=`<div class="empty">${q?'No contact matches that. Try a district, a post like “PD”, or part of a number.':f==='mine'?'None of your districts has a contact in the RSRDC list yet. Open Contacts in the menu to see everyone, or add a contact.':'No contacts here yet.'}</div>`;
   return `<h1 class="title">${head} <small>(${list.length})</small></h1>
   ${posts.length>1?`<div class="chips" role="group" aria-label="Filter by post"><button class="chip${pf?'':' on'}" data-a="post" data-v="" aria-pressed="${!pf}">All</button>${posts.map(g=>`<button class="chip${g===pf?' on':''}" data-a="post" data-v="${g}" aria-pressed="${g===pf}">${esc(CHIP[g])}</button>`).join('')}</div>`:''}
@@ -545,8 +557,8 @@ function vPerson(){
   return `<div class="pbar"><button class="ib" data-a="back" aria-label="Back">${ic('back')}</button><span class="grow"></span>
    <button class="ib${isStar(o)?' on':''}" style="${isStar(o)?'color:var(--blue)':''}" data-a="star" data-id="${esc(o.id)}" aria-label="${isStar(o)?'Unstar':'Star'}" aria-pressed="${isStar(o)}">${ic(isStar(o)?'star':'starO')}</button>
    <button class="btn" data-a="editp" data-id="${esc(o.id)}">Edit</button></div>
-  <div class="phead">${avatar(o,'xl')}<div><h1>${esc(title(o))}</h1><p>${o.person?esc(o.name)+' · ':''}${o.custom?'Added by you':'RSRDC'}</p>
-   <div class="labels">${(o.region?[]:o.dists).map(id=>`<button class="lab" data-a="nav" data-v="d:${esc(id)}">${ic('label','i xs')}${esc(D.byId[id].name)}</button>`).join('')}${o.region?`<span class="lab">${ic('label','i xs')}${o.dists.length} districts</span>`:''}<button class="lab" data-a="nav" data-v="g:${esc(o.level)}">${ic('label','i xs')}${esc(GNAME[o.level])}</button></div></div></div>
+  <div class="phead">${avatar(o,'xl')}<div><h1>${esc(title(o))}</h1><p>${o.person?esc(o.name)+' · ':''}${o.custom?'Added by you':o.gov?esc(SRCNAME[o.src]):'RSRDC'}</p>
+   <div class="labels">${(o.region?[]:o.dists).map(id=>`<button class="lab" data-a="nav" data-v="d:${esc(id)}">${ic('label','i xs')}${esc(D.byId[id].name)}</button>`).join('')}${o.region?`<span class="lab">${ic('label','i xs')}${o.dists.length} districts</span>`:''}<button class="lab" data-a="nav" data-v="g:${esc(o.level)}">${ic('label','i xs')}${esc(GNAME[o.level])}</button>${o.gov?`<button class="lab" data-a="nav" data-v="src:${esc(o.src)}">${ic('label','i xs')}${o.src==='DC'?'State directory 2020':'Secretariat 2020'}</button>`:''}</div></div></div>
   <div class="ract">${n?`<a href="${tel}" data-a="call" data-id="${esc(o.id)}"><span>${ic('phone','i s')}</span>Call</a>`:`<button data-a="editp" data-id="${esc(o.id)}"><span>${ic('add','i s')}</span>Add number</button>`}
    <button data-a="newn" data-id="${esc(o.id)}"><span>${ic('note','i s')}</span>Note</button><button data-a="newc" data-id="${esc(o.id)}"><span>${ic('report','i s')}</span>Complaint</button></div>
   <div class="boxes">
@@ -554,9 +566,10 @@ function vPerson(){
     ${ui.ep===o.id?phoneEditor(o):''}
     ${nums.length?nums.map(x=>`<div class="drow">${ic('phone','i s')}<div><a href="tel:${esc(telOf(x.n))}" data-a="call" data-id="${esc(o.id)}">${esc(x.n)}</a><div class="lb">${esc(x.label)}</div></div></div>`).join(''):`<div class="drow">${ic('phone','i s')}<div><button class="tb" style="margin-left:-12px" data-a="editp" data-id="${esc(o.id)}">Add a number</button></div></div>`}
     ${o.person?`<div class="drow">${ic('work','i s')}<div>${esc(o.name)}<div class="lb">Post</div></div></div>`:''}
-    <div class="drow">${ic('pin','i s')}<div>${esc(o.region?o.dists.map(i=>D.byId[i].name).join(', '):o.dists.map(i=>D.byId[i].name).join(', '))}<div class="lb">${o.region?'Districts under this DGM':'District'}</div></div></div>
+    ${o.gov&&o.dept?`<div class="drow">${ic('work','i s')}<div>${esc(o.dept)}<div class="lb">Department or section</div></div></div>`:''}
+    <div class="drow">${ic('pin','i s')}<div>${esc(o.dists.length?o.dists.map(i=>D.byId[i].name).join(', '):distLabel(o))}<div class="lb">${o.region?'Districts under this DGM':o.dists.length?'District':'Office'}</div></div></div>
     ${o.ext&&nums.every(x=>!/ext/.test(x.label))?`<p class="small">Head office extension ${o.ext} (EPABX ${EPABX})</p>`:''}
-    <p class="small" style="margin:8px 0 0">${o.custom?'Added by you':esc(SOURCE)}</p>
+    <p class="small" style="margin:8px 0 0">${o.custom?'Added by you':o.gov?esc(SRCNAME[o.src])+', page '+o.page+'. '+esc(GOVNOTE):esc(SOURCE)}</p>
    </section>
    <section class="box" aria-label="Complaints and notes"><h2>Complaints and notes</h2>
     <div class="qadd"><label style="flex:1;display:flex"><span class="sr">Add a note</span><input id="qn" placeholder="Add a note… start with ! for a complaint" enterkeyhint="done" autocomplete="off"></label><button class="ib sm" data-a="qnote" aria-label="Save note" style="color:var(--blue)">${ic('send','i s')}</button></div>
@@ -697,7 +710,7 @@ const keepY=fn=>{const y=scrollY;fn();scrollTo(0,y)};
 const A={
   drawer:()=>openDrawer(),
   back:()=>{if(R.s==='newc'&&!ui.saved)(ui.dp||[]).forEach(pDel);if(R.s==='newc'||R.s==='newn'){ui.dp=[];ui.fs=ui.fd=ui.nt=''}back()},
-  nav:(el)=>{ui.q='';syncQ();const f=el.dataset.v;if(R.s==='list')swap({s:'list',f});else go({s:'list',f})},
+  nav:(el)=>{ui.q='';ui.limit=0;syncQ();const f=el.dataset.v;if(R.s==='list')swap({s:'list',f});else go({s:'list',f})},
   go:(el)=>{ui.q='';syncQ();const s=el.dataset.v;if(R.s===s){closeDrawer();return}go({s})},
   person:(el)=>{if(!el.dataset.id)return A.nav(el);ui.ep=null;go({s:'person',id:el.dataset.id})},
   editp:(el)=>{const id=el.dataset.id;ui.ep=id;if(R.s!=='person'||R.id!==id)go({s:'person',id});else render();setTimeout(()=>{const i=document.getElementById(D.offices[id]?.custom?'eName':'phIn');if(i){i.focus();i.scrollIntoView({block:'center'})}},30)},
@@ -747,7 +760,8 @@ const A={
   cpost:(el)=>{const id=el.dataset.id;const txt=((ui.cd||{})[id]||'').trim();if(!txt)return;const c=S.complaints.find(x=>x.id==id);c.comments.push({text:txt,at:Date.now()});save();ui.cd[id]='';keepY(render)},
   cshare:(el)=>shareComplaint(S.complaints.find(x=>x.id==el.dataset.id)),
   cf:(el)=>{ui.cf=el.dataset.v;render()},
-  post:(el)=>{ui.post=el.dataset.v||null;renderMain()},
+  post:(el)=>{ui.post=el.dataset.v||null;ui.limit=0;renderMain()},
+  more:()=>{ui.limit=(ui.limit||250)+500;renderMain()},
   view:(el)=>viewPhoto(el.dataset.id,el.dataset.owner)
 };
 function syncQ(){const q=document.getElementById('q');if(q.value!==ui.q)q.value=ui.q;document.getElementById('qx').hidden=!ui.q}
@@ -765,7 +779,7 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('input',e=>{
   const t=e.target;
-  if(t.id==='q'){ui.q=t.value;document.getElementById('qx').hidden=!ui.q;if(R.s!=='list'){R={s:'list',f:R.f||defaultF()};try{history.pushState(R,'')}catch(e){}document.body.classList.remove('sub','nofab')}renderMain()}
+  if(t.id==='q'){ui.q=t.value;ui.limit=0;document.getElementById('qx').hidden=!ui.q;if(R.s!=='list'){R={s:'list',f:R.f||defaultF()};try{history.pushState(R,'')}catch(e){}document.body.classList.remove('sub','nofab')}renderMain()}
   else if(t.id==='ctext'){ui.ct=t.value;t.rows=t.value?3:1}
   else if(t.id==='fSubj')ui.fs=t.value;else if(t.id==='fDet')ui.fd=t.value;else if(t.id==='nText')ui.nt=t.value;
   else if(t.dataset&&t.dataset.cd){ui.cd=ui.cd||{};ui.cd[t.dataset.cd]=t.value}
@@ -783,10 +797,27 @@ for(const id of ['fCam','fGal'])document.getElementById(id).addEventListener('ch
 document.getElementById('fRestore').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)restore(f)});
 let wasPhone=isPhone();addEventListener('resize',()=>{const p=isPhone();if(p!==wasPhone){wasPhone=p;closeDrawer()}});
 
+/* ---------- 2020 government directories (loaded beside the page) ---------- */
+function loadGov(){
+  fetch('gov2020.json').then(r=>r.ok?r.json():null).then(j=>{
+    if(!j||!Array.isArray(j.rows))return;
+    j.rows.forEach(([id,level,dept,name,person,dists,numbers,src,page,rank],i)=>{
+      if(D.offices[id])return;
+      const nums=numbers.map(([label,n])=>({label,n}));
+      const dial=nums.find(x=>x.label!=='Sachivalaya intercom')||nums[0];
+      const ds=dists.filter(d=>D.byId[d]);
+      const o={id,idx:1000+i,rank,level,dept,name,person,short:name,dists:ds,distId:ds[0]||null,numbers:nums,phone:dial?dial.n:'',ext:0,gov:true,src,page};
+      D.offices[id]=o;ds.forEach(d=>D.byId[d].offices.push(o));
+    });
+    GOV_SRC=j.source||'';
+    const y=scrollY;render();scrollTo(0,y);
+  }).catch(()=>{});
+}
 /* ---------- start ---------- */
 R=S.onboarded?{s:'list',f:defaultF()}:{s:'pick'};
 try{history.replaceState(R,'')}catch(e){}
 render();
+loadGov();
 if('serviceWorker' in navigator&&location.protocol==='https:'){try{navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}}
 }
 </script>
