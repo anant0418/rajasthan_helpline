@@ -1,7 +1,7 @@
 # Sugam Dial
 
-A small website that works like an app on your phone: call PWD offices in the Rajasthan districts you
-pick, and keep complaints (with photos) and notes about them. Everything you save stays on your phone.
+A small website that works like an app on your phone: call RSRDC offices for the Rajasthan districts
+you pick, and keep complaints (with photos) and notes about them. Everything you save stays on your phone.
 
 Material Design 2 look (Notes design system, Kumbh Sans).
 
@@ -33,12 +33,22 @@ Material Design 2 look (Notes design system, Kumbh Sans).
 Browser storage on the phone: `localStorage` for text, IndexedDB for photos (shrunk to 1600 px JPEG).
 Nothing is uploaded. Clearing Chrome's site data for this site deletes it, so back up now and then.
 
-## Office data
+## Contact data
 
-The office list is **sample data** (structure only, no phone numbers) until the Sugampath directory is
-loaded. Districts are the 41 districts of Rajasthan. To load the real list, edit `SAMPLE` in
-`index.html` (each row: district, circle, has circle office, divisions, sub-divisions) and add
-`phone` values, or replace it with the full Sugampath export.
+Contacts come from the **RSRDC telephone list as on 01-09-2026** (Rajasthan State Road Development &
+Construction Corpn., pwd.rajasthan.gov.in/rsrdc → Contact directory, PDF). They live in `CONTACTS` in
+`index.html`:
+
+- **Project Directors** for each district they cover (Kekri is listed under Bhilwara, Karauli also
+  covers Dholpur), with mobile numbers.
+- **DGM groups**: each PD's DGM as printed in the list ("DGM- I" is read as DGM-I Jaipur, "DGM-II" as
+  DGM-II Jaipur). The DGM shows up in every district of their group, and Search can add a whole group.
+- **Electrical, QC and Expressway** PDs and the **Jaipur head office** (0141 3506 + extension,
+  EPABX 0141 2708717, toll free 1800 891 4171), under Jaipur.
+
+Office numbers the PDF prints incompletely (a lone STD code, or a number without one) are left out;
+only mobiles are kept for those. Anyone can correct a number on their phone with the pencil
+("Updated by you"), or add contacts of their own. Districts not in the list start empty.
 
 ## Files
 

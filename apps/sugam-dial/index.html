@@ -181,27 +181,109 @@ person:'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-
 const ic=(n,c='i')=>`<svg class="${c}" viewBox="0 0 24 24" aria-hidden="true"><path d="${P[n]}"/></svg>`;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* ---------- districts + sample offices ---------- */
+/* ---------- districts + RSRDC contacts ---------- */
 const DISTRICTS=['Ajmer','Alwar','Balotra','Banswara','Baran','Barmer','Beawar','Bharatpur','Bhilwara','Bikaner','Bundi','Chittorgarh','Churu','Dausa','Deeg','Dholpur','Didwana-Kuchaman','Dungarpur','Hanumangarh','Jaipur','Jaisalmer','Jalore','Jhalawar','Jhunjhunu','Jodhpur','Karauli','Khairthal-Tijara','Kota','Kotputli-Behror','Nagaur','Pali','Phalodi','Pratapgarh','Rajsamand','Salumbar','Sawai Madhopur','Sikar','Sirohi','Sri Ganganagar','Tonk','Udaipur'];
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-/* Sample structure only: names and numbers are to be replaced with the Sugampath list. */
-const SAMPLE=[
-['Jaipur','Jaipur',true,['Division I','Division II'],['Sanganer','Amer','Chaksu']],
-['Ajmer','Ajmer',true,['Division Ajmer'],['Kishangarh']],
-['Tonk','Ajmer',false,['Division Tonk'],['Malpura','Niwai']],
-['Kota','Kota',true,['Division Kota'],['Ramganj Mandi']],
-['Bundi','Kota',false,['Division Bundi'],[]],
-['Jodhpur','Jodhpur',true,['Division Jodhpur'],[]],
-['Udaipur','Udaipur',true,['Division Udaipur'],[]]
+/* Contacts: RSRDC (Rajasthan State Road Development & Construction Corpn.) telephone list,
+   as on 01-09-2026, from pwd.rajasthan.gov.in/rsrdc → Contact directory (PDF).
+   Head office numbers are 0141 3506 + extension; EPABX 0141 2708717. */
+const SOURCE='RSRDC contact list, as on 1 Sep 2026';
+const EPABX='0141 2708717';
+/* DGM groups = the DGM each Project Director reports to, as printed in the list ("DGM- I" read as DGM-I Jaipur, "DGM-II" as DGM-II Jaipur). */
+const REGIONS={
+  'DGM Ajmer':['Ajmer','Bhilwara','Chittorgarh','Udaipur','Banswara','Nagaur'],
+  'DGM Jodhpur':['Barmer','Jaisalmer','Jodhpur','Pali','Sirohi'],
+  'DGM-I Jaipur':['Jaipur','Alwar','Bharatpur','Karauli','Dholpur','Jhalawar','Kota'],
+  'DGM-II Jaipur':['Jaipur','Bikaner','Churu','Sri Ganganagar','Sikar'],
+  'DGM Kota':['Tonk','Baran'],
+  'DGM (Admin)':['Sawai Madhopur','Jhunjhunu']
+};
+const GROUPS=[['PD','Project Directors'],['DGM','DGM for this region'],['SPL','Electrical, QC and Expressway'],['HQ','Head office, Jaipur'],['Other','Added by you']];
+/* [group, designation, name, districts, mobile(s), office, ext, region-of-DGM] */
+const CONTACTS=[
+['HQ','Head office EPABX','RSRDC, Setu Bhawan, Jaipur',['Jaipur'],'',EPABX],
+['HQ','Toll free','RSRDC helpline',['Jaipur'],'','1800 891 4171'],
+['HQ','Chairman',"Hon'ble Dy. CM Diya Kumari",['Jaipur'],'','0141 3506301',301],
+['HQ','Vice Chairman','Sh. Praveen Gupta',['Jaipur'],'','0141 2227807',301],
+['HQ','PA (RSRDC)','Sh. Suresh Kumar',['Jaipur'],'97850 24296','0141 3506301',301],
+['HQ','Managing Director','Sh. Satayendra Singh',['Jaipur'],'94140 81373','0141 3506303',302],
+['HQ','PA to MD','Sh. Suresh Kumar',['Jaipur'],'97850 24296','0141 3506303',303],
+['HQ','CFO','Sh. Krishn Kanhaiya Meena',['Jaipur'],'94142 97751','0141 3506332',320],
+['HQ','Chief Architect','Sh. Jitendra Purohit',['Jaipur'],'94142 41688','0141 3506310',310],
+['HQ','General Manager','Sh. Neeraj Jain',['Jaipur'],'79769 28813','0141 3506357',357],
+['HQ','CPM-I','Sh. Sangeet Kumar',['Jaipur'],'94140 17384','0141 3506399',304],
+['HQ','CPM-II','Sh. Davendra Kr. Gupta',['Jaipur'],'90015 52211','0141 3506307',306],
+['HQ','PA (GM / CPM)','',['Jaipur'],'','0141 3506307',357],
+['HQ','DGM (Electrical), Jaipur','Sh. Pankaj Garg',['Jaipur'],'98292 70949','0141 3506356',356],
+['HQ','DGM (Expressway)','Sh. Girish Jain',['Jaipur'],'94686 80799','0141 3506311',311],
+['HQ','DGM (Legal)','Sh. S. C. Katara',['Jaipur'],'94143 15101','0141 3506364',363],
+['HQ','Sr. A.O. (T)','Sh. Gyan Singh Khuswaha',['Jaipur'],'98280 78178','0141 3506384',384],
+['HQ','Sr. A.O. (P)','Sh. Madhu Sudan Sharma',['Jaipur'],'94146 46404','0141 3506398',398],
+['HQ','Sr. A.O. Pension','Sh. Mukesh Avatar',['Jaipur'],'79761 32838','0141 3506368',368],
+['HQ','Consultant (Accounts)','Sh. S. K. Tekwani',['Jaipur'],'94140 43898','0141 3506328',328],
+['HQ','Manager (Admin)','Sh. Raman Lal',['Jaipur'],'80038 92777','0141 3506314',314],
+['HQ','Manager (Building)','Smt. Abha Gaur',['Jaipur'],'86199 47514','0141 3506326',326],
+['HQ','Manager (Enquiry)','Sh. Parminder Singh',['Jaipur'],'98292 00400','0141 3506371',371],
+['HQ','Manager (Road)','Sh. Shahrukh Khan',['Jaipur'],'99501 98905','0141 3506330',330],
+['HQ','Stationery Store','Sh. Ali Khan',['Jaipur'],'95494 42121','0141 3506340',340],
+['DGM','DGM Ajmer','Sh. Chandra Prakash Sancheti',null,'94146 17353','0141 3506333',333,'DGM Ajmer'],
+['DGM','DGM Jodhpur','Sh. Yogendra Sharma',null,'94143 75315','',0,'DGM Jodhpur'],
+['DGM','DGM-I Jaipur','Sh. Anil Kr. Jain',null,'94142 48124','0141 3506333',333,'DGM-I Jaipur'],
+['DGM','DGM-II Jaipur','Sh. Vijay Kr. Gupta',null,'94140 72671','0141 3506337',337,'DGM-II Jaipur'],
+['DGM','DGM (Admin)','Sh. Umesh Garg',null,'99825 10033','0141 3506341',341,'DGM (Admin)'],
+['PD','PD Ajmer','Sh. Rajendra Meena',['Ajmer'],'86194 33455'],
+['PD','PD Tonk','Sh. Rishikesh Meena',['Tonk'],'94609 81618'],
+['PD','PD Barmer','Sh. Mahendra Kumar',['Barmer'],'94606 06083'],
+['PD','PD Jaisalmer','Sh. Mahendra Kumar',['Jaisalmer'],'94606 06083'],
+['PD','PD Bikaner','Sh. Shilpa Kachhwaha',['Bikaner'],'98290 73719'],
+['PD','PD Churu','Sh. Nikhil Mishra',['Churu'],'94627 41189'],
+['PD','PD Kekri (Bhilwara)','Sh. Rishikesh Meena',['Bhilwara'],'72300 14172'],
+['PD','PD Chittorgarh','Sh. Anil Kumar Verma',['Chittorgarh'],'97835 97607','0294 2412371'],
+['PD','PD Jaipur-III','Sh. Chander Mohan Vasudev',['Jaipur'],'94145 08538','0141 3506338',338],
+['PD','PD Jaipur-IV','Smt. Shalini Garg',['Jaipur'],'99834 70819','0141 3506308',308],
+['PD','PD Jaipur-V','Smt. Harshita Soni',['Jaipur'],'87699 90524','',322],
+['PD','PD Jodhpur-I','Sh. Ritesh Kumar Gaur',['Jodhpur'],'96100 89894','0291 2519263'],
+['PD','PD Jodhpur-II','Sh. Jitendra Chouhan',['Jodhpur'],'94623 80493','0291 2519263'],
+['PD','PD Pali','Sh. Rajeev Chhajer',['Pali'],'98296 20766'],
+['PD','PD Sirohi','Sh. Saurabh Jain',['Sirohi'],'96601 16884'],
+['PD','PD Sri Ganganagar','Sh. Govind Ram Vishnoi',['Sri Ganganagar'],'76888 11229, 63785 35427'],
+['PD','PD Udaipur','Sh. Lokesh Meena',['Udaipur'],'97854 16397'],
+['PD','PD Banswara','Sh. Saurabh Jain',['Banswara'],'96601 16884'],
+['PD','PD Nagaur','Sh. Chetan Sahu',['Nagaur'],'73002 33499'],
+['PD','PD Alwar','Sh. Satish Kumar',['Alwar'],'90243 90995'],
+['PD','PD Bharatpur','Sh. Rakesh Kumar Dixit',['Bharatpur'],'97999 99445'],
+['PD','PD Karauli (Dholpur)','Sh. Mahipal Devanda',['Karauli','Dholpur'],'96023 10084'],
+['PD','PD Sawai Madhopur','Sh. Rishikesh Meena',['Sawai Madhopur'],'94609 81618'],
+['PD','PD Jhalawar','Sh. Lalit Kumar Meghwal',['Jhalawar'],'99299 57899'],
+['PD','PD Kota','Sh. Raj Kumar Rajoriya',['Kota'],'82395 21285'],
+['PD','PD Sikar','Sh. Mohit Parashar',['Sikar'],'94624 21050'],
+['PD','PD Jhunjhunu','Smt. Seema Marodiya',['Jhunjhunu'],'90243 58796'],
+['PD','PD Baran','Sh. Shekhar Meena',['Baran'],'80582 68259'],
+['SPL','PD Kota (Electrical)','Sh. Avadh Bihari Makvana',['Kota'],'92567 19960, 94623 96218'],
+['SPL','PD Electrical-I, Jaipur','Sh. Rahul Saghwani',['Jaipur'],'94137 89849','0141 3506325',325],
+['SPL','PD Electrical-II, Jaipur','Sh. Arvind Khatri',['Jaipur'],'98294 56575','',349],
+['SPL','PD Electrical, Sikar','Sh. Mukesh Kumar Singhal',['Sikar'],'77919 09949'],
+['SPL','PD Electrical, Jodhpur','Sh. S. P. Bohra',['Jodhpur'],'94141 31553'],
+['SPL','PD Quality Control-I, Jaipur','Smt. Priyanka Meena',['Jaipur'],'70238 57885','0141 3506366',366],
+['SPL','PD Quality Control-II, Jaipur','Sh. Deepak Sharma',['Jaipur'],'99294 03862','',312],
+['SPL','PD Quality Control, Jodhpur','Smt. Prerna Maheshwari',['Jodhpur'],'','',312],
+['SPL','PD Mechanical','Sh. Abhishek Manohar',['Jaipur'],'70082 79620','0141 3506321',321],
+['SPL','PD Expressway-I','Jayati Tatawat',['Jaipur'],'94616 40444'],
+['SPL','PD Expressway-II','',['Jaipur'],'98282 24857'],
+['SPL','PD Expressway-III','Smt. Nipun Gupta',['Jaipur'],'94134 42628'],
+['SPL','PD Expressway-IV','Khema Ram Ji',['Jaipur'],'99017 93529']
 ];
 const D={byId:{},list:[],offices:{},circles:{}};
 DISTRICTS.forEach(n=>{const d={id:slug(n),name:n,circle:null,offices:[]};D.byId[d.id]=d;D.list.push(d)});
-SAMPLE.forEach(([name,circle,hq,divs,subs])=>{
-  const d=D.byId[slug(name)];d.circle=circle;(D.circles[circle]=D.circles[circle]||[]).push(d.id);
-  const add=(k,i,level,full,short)=>{const o={id:d.id+'-'+k+i,distId:d.id,level,name:full,short,phone:'',sample:true};d.offices.push(o);D.offices[o.id]=o};
-  if(hq)add('se',0,'SE','Superintending Engineer, Circle '+circle,'SE, Circle '+circle);
-  divs.forEach((v,i)=>add('x',i,'XEN','Executive Engineer, '+v,'XEN, '+v));
-  subs.forEach((v,i)=>add('a',i,'AEN','Assistant Engineer, '+v,'AEN, '+v));
+Object.entries(REGIONS).forEach(([r,names])=>{D.circles[r]=names.map(slug);names.forEach(n=>{const d=D.byId[slug(n)];d.circle=d.circle?d.circle+' / '+r:r})});
+CONTACTS.forEach(([level,name,person,dists,mob,office,ext,region],i)=>{
+  const ids=dists?dists.map(slug):D.circles[region];
+  const numbers=[];
+  (mob||'').split(',').map(s=>s.trim()).filter(Boolean).forEach((n,k)=>numbers.push({label:k?'Mobile (2)':'Mobile',n}));
+  if(office)numbers.push({label:'Office',n:office});
+  else if(ext)numbers.push({label:'Head office, ext. '+ext,n:EPABX});
+  const o={id:'r'+i,distId:ids[0],dists:ids,level,name,person:person||'',short:name,numbers,phone:numbers[0]?numbers[0].n:'',ext:ext||0,region:region||null};
+  D.offices[o.id]=o;ids.forEach(id=>D.byId[id].offices.push(o));
 });
 
 /* ---------- saved data (this phone only) ---------- */
@@ -214,7 +296,7 @@ const nid=()=>S.seq++;
 function rebuildCustom(){
   D.list.forEach(d=>{d.offices=d.offices.filter(o=>!o.custom)});
   Object.keys(D.offices).forEach(k=>{if(D.offices[k].custom)delete D.offices[k]});
-  S.custom.forEach(o=>{const c=Object.assign({custom:true},o);D.offices[c.id]=c;D.byId[c.distId]&&D.byId[c.distId].offices.push(c)});
+  S.custom.forEach(o=>{const c=Object.assign({custom:true,person:''},o);c.level='Other';c.dists=[c.distId];c.numbers=c.phone?[{label:'Phone',n:c.phone}]:[];D.offices[c.id]=c;D.byId[c.distId]&&D.byId[c.distId].offices.push(c)});
 }
 rebuildCustom();
 const offs=d=>d.offices.filter(o=>!S.hidden.includes(o.id));
@@ -283,8 +365,8 @@ const callBtn=o=>{const n=ph(o);return n?`<a class="ib tonal" href="tel:${esc(te
 function phoneEditor(o){
   return `<div class="edit"><div class="t1">${esc(o.name)}</div>
   <label class="field"><span>Phone number</span><input id="phIn" type="tel" inputmode="tel" autocomplete="off" value="${esc(ph(o))}" placeholder="e.g. 0141 2222222"></label>
-  ${o.phone?`<span class="t3">Sugampath number: ${esc(o.phone)}</span>`:''}
-  <div class="acts">${S.phones[o.id]!=null&&o.phone?`<button class="tb left" data-a="phreset" data-id="${esc(o.id)}">Use Sugampath number</button>`:''}
+  ${o.phone&&!o.custom?`<span class="t3">In the RSRDC list: ${esc(o.phone)}</span>`:''}
+  <div class="acts">${S.phones[o.id]!=null&&o.phone?`<button class="tb left" data-a="phreset" data-id="${esc(o.id)}">Use the RSRDC number</button>`:''}
   <button class="tb" data-a="phcancel">Cancel</button><button class="btn" data-a="phsave" data-id="${esc(o.id)}">Save</button></div></div>`;
 }
 const targetSelect=(d,sel,id)=>`<select id="${id}" aria-label="Complaint is for">${[['','Whole district']].concat(offs(d).map(o=>[o.id,o.short])).map(([v,l])=>`<option value="${esc(v)}"${v===(sel||'')?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
@@ -295,7 +377,7 @@ function vPick(){
   return `<div style="padding:40px 24px 16px"><div class="logo" style="width:48px;height:48px;margin-bottom:20px">${ic('pin')}</div>
   <h1 style="margin:0;font-size:28px;line-height:36px;font-weight:400">Choose your districts</h1>
   <p class="t2" style="margin:8px 0 0">Their offices show up first. You can add more later from search.</p></div>
-  <div role="group" aria-label="Districts" style="padding-bottom:96px">${D.list.map(d=>{const on=sel.has(d.id);return `<button class="pick${on?' on':''}" data-a="pick" data-id="${d.id}" aria-pressed="${on}"><span class="box">${on?ic('check','i s'):''}</span><span style="flex:1">${esc(d.name)}</span>${d.circle?`<span class="t3">Circle ${esc(d.circle)}</span>`:''}</button>`}).join('')}</div>
+  <div role="group" aria-label="Districts" style="padding-bottom:96px">${D.list.map(d=>{const on=sel.has(d.id);return `<button class="pick${on?' on':''}" data-a="pick" data-id="${d.id}" aria-pressed="${on}"><span class="box">${on?ic('check','i s'):''}</span><span style="flex:1">${esc(d.name)}</span>${d.circle?`<span class="t3">${esc(d.circle)}</span>`:''}</button>`}).join('')}</div>
   <div class="foot"><div><span class="t2" style="flex:1">${sel.size} selected</span>${S.onboarded?'':`<button class="tb" data-a="pickdone" data-skip="1">Skip</button>`}<button class="btn" data-a="pickdone">${S.onboarded?'Save':'Continue'}</button></div></div>`;
 }
 
@@ -305,12 +387,12 @@ function vHome(){
   let body='';
   if(tab==='districts'){
     const favs=S.favs.map(id=>D.byId[id]).filter(Boolean);
-    body=`<button class="search" data-a="search">${ic('search')}Search district, circle or office</button>
+    body=`<button class="search" data-a="search">${ic('search')}Search district, DGM or person</button>
     <h2 class="sh" style="padding-top:0">Favourites</h2>
     ${favs.length?'':`<div class="empty">Districts you add show up here.</div>`}
     ${favs.map(d=>{const o=offs(d).length,c=S.complaints.filter(x=>x.distId===d.id&&x.status==='open').length;
       return `<button class="card fav" data-a="dist" data-id="${d.id}"><span class="av">${esc(d.name[0])}</span><span style="flex:1"><span class="t1">${esc(d.name)}</span><span class="t2">${o?o+(o===1?' contact':' contacts'):'No contacts yet'}${c?' · '+c+' open':''}</span></span>${ic('chev')}</button>`}).join('')}
-    <button class="ob" data-a="search" style="width:calc(100% - 32px);margin:0 16px;height:56px;border-style:dashed;display:flex;align-items:center;justify-content:center;gap:8px">${ic('add','i s')}Add district or circle</button>`;
+    <button class="ob" data-a="search" style="width:calc(100% - 32px);margin:0 16px;height:56px;border-style:dashed;display:flex;align-items:center;justify-content:center;gap:8px">${ic('add','i s')}Add district or DGM group</button>`;
   }else if(tab==='complaints'){
     const f=ui.cf||'open';const list=S.complaints.filter(c=>c.status===f);
     body=`<div class="chips"><button class="chip${f==='open'?' on':''}" data-a="cf" data-v="open">Open</button><button class="chip${f==='resolved'?' on':''}" data-a="cf" data-v="resolved">Resolved</button></div>
@@ -326,11 +408,11 @@ function vHome(){
 function vSearch(){
   const q=(ui.q||'').trim().toLowerCase();
   const btn=(on,a,id,l)=>`<button class="${on?'chip on':'tb'}" style="${on?'height:36px;border-radius:4px':'border:1px solid var(--line)'};padding:0 16px" data-a="${a}" data-id="${esc(id)}">${on?ic('check','i s'):''}${l}</button>`;
-  const dr=D.list.filter(d=>!q||d.name.toLowerCase().includes(q)).map(d=>{const on=S.favs.includes(d.id);return `<div class="row"><button class="main" data-a="dist" data-id="${d.id}"><span class="t1">${esc(d.name)}</span><span class="t2">District${d.circle?' · Circle '+esc(d.circle):''}</span></button>${btn(on,'fav',d.id,on?'Added':'Add')}</div>`});
-  const cr=Object.keys(D.circles).filter(c=>!q||('circle '+c).toLowerCase().includes(q)).map(c=>{const ids=D.circles[c],all=ids.every(i=>S.favs.includes(i));return `<div class="row"><button class="main" data-a="dist" data-id="${ids[0]}"><span class="t1">Circle ${esc(c)}</span><span class="t2">${ids.map(i=>esc(D.byId[i].name)).join(', ')}</span></button>${btn(all,'favc',c,all?'Added':'Add all')}</div>`});
-  const or=q.length<2?[]:Object.values(D.offices).filter(o=>!S.hidden.includes(o.id)&&(o.name+' '+D.byId[o.distId].name+' '+ph(o)).toLowerCase().includes(q)).slice(0,20).map(o=>`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span><span class="t2">${esc(D.byId[o.distId].name)}${ph(o)?' · '+esc(ph(o)):''}</span></button>${callBtn(o)}</div>`);
-  const groups=[['Districts',dr],['Circles',cr],['Contacts',or]].filter(g=>g[1].length);
-  return `<header class="bar" style="box-shadow:var(--sh1)"><button class="ib" data-a="back" aria-label="Back">${ic('back')}</button><label style="flex:1"><span class="sr">Search</span><input id="q" value="${esc(ui.q||'')}" placeholder="District, circle or contact" autocomplete="off" style="width:100%;border:0;outline:0;background:transparent;font-size:16px"></label>${ui.q?`<button class="ib" data-a="qclear" aria-label="Clear search">${ic('close')}</button>`:''}</header>
+  const dr=D.list.filter(d=>!q||d.name.toLowerCase().includes(q)).map(d=>{const on=S.favs.includes(d.id);return `<div class="row"><button class="main" data-a="dist" data-id="${d.id}"><span class="t1">${esc(d.name)}</span><span class="t2">District${d.circle?' · under '+esc(d.circle):''}</span></button>${btn(on,'fav',d.id,on?'Added':'Add')}</div>`});
+  const cr=Object.keys(D.circles).filter(c=>!q||(c+' '+D.circles[c].join(' ')).toLowerCase().includes(q)).map(c=>{const ids=D.circles[c],all=ids.every(i=>S.favs.includes(i));return `<div class="row"><button class="main" data-a="dist" data-id="${ids[0]}"><span class="t1">All districts under ${esc(c)}</span><span class="t2">${ids.map(i=>esc(D.byId[i].name)).join(', ')}</span></button>${btn(all,'favc',c,all?'Added':'Add all')}</div>`});
+  const or=q.length<2?[]:Object.values(D.offices).filter(o=>!S.hidden.includes(o.id)&&(o.name+' '+o.person+' '+o.dists.map(i=>D.byId[i].name).join(' ')+' '+ph(o)).toLowerCase().includes(q)).slice(0,20).map(o=>`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span><span class="t2">${o.person?esc(o.person)+' · ':''}${ph(o)?esc(ph(o)):esc(D.byId[o.distId].name)}</span></button>${callBtn(o)}</div>`);
+  const groups=[['Districts',dr],['DGM groups',cr],['Contacts',or]].filter(g=>g[1].length);
+  return `<header class="bar" style="box-shadow:var(--sh1)"><button class="ib" data-a="back" aria-label="Back">${ic('back')}</button><label style="flex:1"><span class="sr">Search</span><input id="q" value="${esc(ui.q||'')}" placeholder="District, DGM, post or name" autocomplete="off" style="width:100%;border:0;outline:0;background:transparent;font-size:16px"></label>${ui.q?`<button class="ib" data-a="qclear" aria-label="Clear search">${ic('close')}</button>`:''}</header>
   <div id="res">${groups.length?groups.map(([t,r])=>`<h2 class="sh">${t}</h2>${r.join('')}`).join(''):`<div class="empty">Nothing matches “${esc(ui.q)}”.</div>`}</div>`;
 }
 
@@ -363,16 +445,16 @@ function vDist(){
     ${list.length?list.map(c=>compCard(c,false)).join(''):`<div class="empty">No complaints in ${esc(d.name)} yet.</div>`}`;
   }else{
     const lv=ui.lv||'All';const os=offs(d);
-    const levels=['All'].concat(['SE','XEN','AEN','Other'].filter(l=>os.some(o=>o.level===l)));
-    const anySample=os.some(o=>o.sample);
-    body=`${anySample&&!S.bannerOff?`<div class="banner"><span>These are sample contacts. Tap the pencil to add the real numbers, or load the Sugampath list later.</span><button class="tb" data-a="banneroff">Got it</button></div>`:''}
-    <div class="chips" style="padding-top:16px">${levels.map(l=>`<button class="chip${lv===l?' on':''}" data-a="lv" data-v="${l}">${l}</button>`).join('')}</div>
-    ${[['SE','Circle'],['XEN','Divisions'],['AEN','Sub-divisions'],['Other','Other contacts']].filter(([l])=>lv==='All'||lv===l).map(([l,t])=>{const rows=os.filter(o=>o.level===l);if(!rows.length)return '';
-      return `<h2 class="sh">${t}</h2>`+rows.map(o=>ui.ep===o.id?phoneEditor(o):`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span><span class="t2">${ph(o)?esc(ph(o)):'No number yet'}</span>${S.phones[o.id]!=null?'<span class="tag">Updated by you</span>':''}</button><button class="ib" data-a="editph" data-id="${esc(o.id)}" aria-label="Edit number for ${esc(o.short)}">${ic('edit','i s')}</button>${callBtn(o)}</div>`).join('')}).join('')}
+    const chipName={PD:'Project Directors',DGM:'DGM',SPL:'Electrical, QC',HQ:'Head office',Other:'Mine'};
+    const present=GROUPS.filter(([l])=>os.some(o=>o.level===l));
+    const levels=['All'].concat(present.length>1?present.map(g=>g[0]):[]);
+    body=`<p class="t3" style="margin:0;padding:12px 24px 0">${esc(SOURCE)}. Pencil to update a number.</p>
+    ${levels.length>1?`<div class="chips" style="padding-top:12px">${levels.map(l=>`<button class="chip${lv===l?' on':''}" data-a="lv" data-v="${l}">${l==='All'?'All':chipName[l]}</button>`).join('')}</div>`:''}
+    ${GROUPS.filter(([l])=>lv==='All'||lv===l).map(([l,t])=>{const rows=os.filter(o=>o.level===l);if(!rows.length)return '';
+      return `<h2 class="sh">${t}</h2>`+rows.map(o=>ui.ep===o.id?phoneEditor(o):`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span>${o.person?`<span class="t2">${esc(o.person)}</span>`:''}<span class="t2">${ph(o)?esc(ph(o)):'No number yet'}${o.numbers.length>1?' · +'+(o.numbers.length-1)+' more':''}</span>${S.phones[o.id]!=null?'<span class="tag">Updated by you</span>':''}</button><button class="ib" data-a="editph" data-id="${esc(o.id)}" aria-label="Edit number for ${esc(o.short)}">${ic('edit','i s')}</button>${callBtn(o)}</div>`).join('')}).join('')}
     ${os.length?'':`<div class="empty">No contacts in ${esc(d.name)} yet.</div>`}
     ${ui.addc?`<div class="edit"><div class="t1">New contact in ${esc(d.name)}</div>
-      <label class="field"><span>Office or person</span><input id="ncName" placeholder="e.g. Executive Engineer, Division II" autocomplete="off"></label>
-      <label class="field"><span>Type</span><select id="ncLevel"><option value="XEN">Division (XEN)</option><option value="AEN">Sub-division (AEN)</option><option value="SE">Circle (SE)</option><option value="Other">Other</option></select></label>
+      <label class="field"><span>Office or person</span><input id="ncName" placeholder="e.g. XEN, PWD Division II" autocomplete="off"></label>
       <label class="field"><span>Phone number</span><input id="ncPhone" type="tel" inputmode="tel" autocomplete="off"></label>
       <div class="acts"><button class="tb" data-a="addcCancel">Cancel</button><button class="btn" data-a="addcSave">Save</button></div></div>`
     :`<div style="padding:8px 16px"><button class="tb" data-a="addc">${ic('add','i s')}Add contact</button></div>`}`;
@@ -384,10 +466,12 @@ function vDist(){
 function vOffice(){
   const o=D.offices[R.id];if(!o)return vHome();const d=D.byId[o.distId];
   const comps=S.complaints.filter(c=>c.officeId===o.id),notes=S.notes.filter(n=>n.officeId===o.id);const n=ph(o);
-  return bar('')+`<div style="padding:0 24px 16px"><h1 style="margin:0;font-size:24px;line-height:32px;font-weight:400">${esc(o.name)}</h1><p class="t2" style="margin:4px 0 0">${esc(d.name)}${d.circle?' · Circle '+esc(d.circle):''}</p></div>
+  return bar('')+`<div style="padding:0 24px 16px"><h1 style="margin:0;font-size:24px;line-height:32px;font-weight:400">${esc(o.name)}</h1>${o.person?`<p class="t1" style="margin:4px 0 0;font-weight:400">${esc(o.person)}</p>`:''}<p class="t2" style="margin:4px 0 0">${o.region?'For '+o.dists.map(i=>esc(D.byId[i].name)).join(', '):o.dists.map(i=>esc(D.byId[i].name)).join(', ')}${o.custom?'':' · RSRDC'}</p></div>
   <div class="big3">${n?`<a class="btn" href="tel:${esc(telOf(n))}" data-a="call" data-id="${esc(o.id)}" style="text-decoration:none">${ic('phone')}Call</a>`:`<button class="btn" disabled>${ic('phone')}Call</button>`}
   <button class="ob" data-a="newc" data-id="${esc(o.id)}">${ic('report')}Complaint</button><button class="ob" data-a="newn" data-id="${esc(o.id)}">${ic('note')}Note</button></div>
-  <div style="border-top:1px solid var(--line);padding:8px 0">${ui.ep===o.id?phoneEditor(o):`<div class="inf">${ic('phone')}<div style="flex:1"><span class="t1" style="font-weight:400">${n?esc(n):'No number yet'}</span><span class="t2">${S.phones[o.id]!=null?'Updated by you':o.sample?'Sample contact':o.custom?'Added by you':'From Sugampath'}</span></div><button class="tb" data-a="editph" data-id="${esc(o.id)}">${n?'Edit':'Add'}</button></div>`}
+  <div style="border-top:1px solid var(--line);padding:8px 0">${ui.ep===o.id?phoneEditor(o):`<div class="inf">${ic('phone')}<div style="flex:1"><span class="t1" style="font-weight:400">${n?esc(n):'No number yet'}</span><span class="t2">${S.phones[o.id]!=null?'Updated by you':o.custom?'Added by you':(o.numbers[0]?o.numbers[0].label:'')+' · '+SOURCE}</span></div><button class="tb" data-a="editph" data-id="${esc(o.id)}">${n?'Edit':'Add'}</button></div>`}
+  ${(S.phones[o.id]!=null?o.numbers:o.numbers.slice(1)).map(x=>`<div class="inf">${ic('phone')}<div style="flex:1"><span class="t1" style="font-weight:400">${esc(x.n)}</span><span class="t2">${esc(x.label)}</span></div><a class="ib tonal" href="tel:${esc(telOf(x.n))}" data-a="call" data-id="${esc(o.id)}" aria-label="Call ${esc(x.label)} ${esc(x.n)}">${ic('phone','i s')}</a></div>`).join('')}
+  ${o.ext&&o.numbers.every(x=>!/ext/.test(x.label))?`<p class="t3" style="margin:0;padding:0 24px 8px">Head office extension ${o.ext} (EPABX ${EPABX})</p>`:''}
   ${o.custom?`<div style="padding:0 16px"><button class="tb" data-a="delc" data-id="${esc(o.id)}">${ic('del','i s')}Remove contact</button></div>`:''}</div>
   <h2 class="sh" style="border-top:1px solid var(--line)">Complaints</h2>${comps.length?comps.map(c=>compCard(c,false)).join(''):`<p class="t2" style="margin:0;padding:0 24px 8px">No complaints for this office yet.</p>`}
   <h2 class="sh">My notes</h2>${notes.length?notes.map(x=>`<div class="ocard note"><p>${esc(x.text)}</p><span class="t3">${esc(when(x.at))}</span></div>`).join(''):`<p class="t2" style="margin:0;padding:0 24px">Tap Note to remember what was said on a call.</p>`}`;
@@ -500,14 +584,14 @@ const A={
   editph:(el)=>{ui.ep=el.dataset.id;render();const i=document.getElementById('phIn');if(i){i.focus();i.scrollIntoView({block:'center'})}},
   phcancel:()=>{ui.ep=null;render()},
   phsave:(el)=>{const o=D.offices[el.dataset.id];const v=document.getElementById('phIn').value.trim();
-    if(o.custom){const c=S.custom.find(x=>x.id===o.id);c.phone=v;o.phone=v;delete S.phones[o.id]}
+    if(o.custom){const c=S.custom.find(x=>x.id===o.id);c.phone=v;delete S.phones[o.id];rebuildCustom()}
     else if(!v||v===o.phone)delete S.phones[o.id];else S.phones[o.id]=v;
     save();ui.ep=null;render();toast(v?'Number saved for '+o.short:'Number removed')},
-  phreset:(el)=>{delete S.phones[el.dataset.id];save();ui.ep=null;render();toast('Back to the Sugampath number')},
+  phreset:(el)=>{delete S.phones[el.dataset.id];save();ui.ep=null;render();toast('Back to the RSRDC number')},
   addc:()=>{ui.addc=true;render();document.getElementById('ncName')?.focus()},
   addcCancel:()=>{ui.addc=false;render()},
   addcSave:()=>{const name=document.getElementById('ncName').value.trim();if(!name){document.getElementById('ncName').focus();return}
-    const level=document.getElementById('ncLevel').value,phone=document.getElementById('ncPhone').value.trim();
+    const level='Other',phone=document.getElementById('ncPhone').value.trim();
     const c={id:'u'+nid(),distId:R.id,level,name,short:name.length>28?name.slice(0,26)+'…':name,phone};S.custom.push(c);save();rebuildCustom();ui.addc=false;render();toast('Contact added')},
   delc:(el)=>{const id=el.dataset.id;const c=S.custom.find(x=>x.id===id);S.custom=S.custom.filter(x=>x.id!==id);save();rebuildCustom();back();
     toast('Contact removed','Undo',()=>{S.custom.push(c);save();rebuildCustom();render()})},
