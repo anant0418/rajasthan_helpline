@@ -1,5 +1,5 @@
 // Offline cache for Sugam Dial. Bump VERSION when any file changes.
-const VERSION = 'sugam-dial-v6';
+const VERSION = 'sugam-dial-v7';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-maskable.svg'];
 
 self.addEventListener('install', (e) => {

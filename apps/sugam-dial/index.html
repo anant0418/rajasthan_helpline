@@ -88,8 +88,8 @@ h1.title small{font-size:14px;color:var(--text2)}
 .crow .act{display:flex;justify-content:flex-end;gap:2px;visibility:hidden}
 .crow:hover .act,.crow:focus-within .act{visibility:visible}
 .crow .act .on{color:var(--blue);visibility:visible}
-.av{width:40px;height:40px;border-radius:999px;color:#fff;display:inline-grid;place-items:center;font-size:18px;line-height:1;flex:none}
-.av.xl{width:120px;height:120px;font-size:52px}
+.av{width:40px;height:40px;border-radius:999px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;line-height:40px;flex:none;overflow:hidden}
+.av.xl{width:120px;height:120px;font-size:52px;line-height:120px}
 .empty{padding:40px 24px;text-align:center;color:var(--text2)}
 .fab{display:none}
 
@@ -509,17 +509,20 @@ function rowHtml(o){
 function vList(){
   const f=R.f||defaultF();const q=(ui.q||'').trim().toLowerCase();
   const base=q?allContacts():pool(f);
-  const list=base.filter(o=>matches(o,q));
+  const found=base.filter(o=>matches(o,q));
+  const posts=GROUPS.map(g=>g[0]).filter(g=>found.some(o=>o.level===g));
+  const pf=posts.includes(ui.post)?ui.post:null;
+  const list=found.filter(o=>!pf||o.level===pf);
   const starred=f==='star'?[]:list.filter(isStar).sort(byRank);
   const rest=list.filter(o=>f==='star'||!isStar(o));
-  const chipF=['mine','all'].filter(x=>x!=='mine'||S.favs.length).concat(S.favs.map(id=>'d:'+id));
+  const CHIP={TOP:'Top officers',DGM:'DGM',PD:'Project Directors',SPL:'Electrical & QC',HQ:'Head office',Other:'Added by you'};
   const head=q?`Results for “${esc(ui.q.trim())}”`:esc(fName(f));
   let body='';
   if(starred.length)body+=`<div class="sec">${ic('star','i xs')}Starred (${starred.length})</div>`+starred.map(rowHtml).join('');
   for(const [g] of GROUPS){const rows=rest.filter(o=>o.level===g).sort(byRank);if(!rows.length)continue;body+=`<div class="sec">${esc(GNAME[g])} (${rows.length})</div>`+rows.map(rowHtml).join('')}
-  if(!list.length)body=`<div class="empty">${q?'No contact matches that. Try a district, a post like “PD”, or part of a number.':f==='mine'?'None of your districts has a contact in the RSRDC list yet. Tap All to see everyone, or add a contact.':'No contacts here yet.'}</div>`;
+  if(!list.length)body=`<div class="empty">${q?'No contact matches that. Try a district, a post like “PD”, or part of a number.':f==='mine'?'None of your districts has a contact in the RSRDC list yet. Open Contacts in the menu to see everyone, or add a contact.':'No contacts here yet.'}</div>`;
   return `<h1 class="title">${head} <small>(${list.length})</small></h1>
-  ${q?'':`<div class="chips">${chipF.map(x=>`<button class="chip${x===f?' on':''}" data-a="nav" data-v="${esc(x)}">${esc(x==='all'?'All':fName(x))}</button>`).join('')}</div>`}
+  ${posts.length>1?`<div class="chips" role="group" aria-label="Filter by post"><button class="chip${pf?'':' on'}" data-a="post" data-v="" aria-pressed="${!pf}">All</button>${posts.map(g=>`<button class="chip${g===pf?' on':''}" data-a="post" data-v="${g}" aria-pressed="${g===pf}">${esc(CHIP[g])}</button>`).join('')}</div>`:''}
   <div class="thead" role="presentation"><span>Name</span><span>Post</span><span>Phone</span><span>District</span><span></span></div>
   ${body}`;
 }
@@ -744,6 +747,7 @@ const A={
   cpost:(el)=>{const id=el.dataset.id;const txt=((ui.cd||{})[id]||'').trim();if(!txt)return;const c=S.complaints.find(x=>x.id==id);c.comments.push({text:txt,at:Date.now()});save();ui.cd[id]='';keepY(render)},
   cshare:(el)=>shareComplaint(S.complaints.find(x=>x.id==el.dataset.id)),
   cf:(el)=>{ui.cf=el.dataset.v;render()},
+  post:(el)=>{ui.post=el.dataset.v||null;renderMain()},
   view:(el)=>viewPhoto(el.dataset.id,el.dataset.owner)
 };
 function syncQ(){const q=document.getElementById('q');if(q.value!==ui.q)q.value=ui.q;document.getElementById('qx').hidden=!ui.q}

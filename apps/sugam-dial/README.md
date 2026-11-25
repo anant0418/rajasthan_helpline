@@ -18,7 +18,8 @@ Laid out like a contacts app: search on top, a side menu (a drawer on phones), o
 - **First launch:** pick your districts. Change them from **Districts +** in the menu.
 - **Contact list:** round initials, name, phone, post, district. Starred people first, then by rank
   (Top officers, DGM, Project Directors, Electrical/QC/Expressway, head office staff, yours).
-  Chips switch between **My districts**, **All** and each district; the menu also filters by group.
+  The menu picks whose contacts you see (Contacts, My districts, a district); chips filter them by
+  post: All, Top officers, DGM, Project Directors, Electrical & QC, Head office.
   On a computer, Star and Edit appear only on the row under the mouse. Press **/** to search.
 - **Person page:** numbers (tap to call), post and district, Star and Edit. **Complaints and notes**
   for that person: type a note and press Enter, start with **!** to log a complaint, or use
