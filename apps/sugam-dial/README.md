@@ -13,21 +13,23 @@ Material Design 2 look (Notes design system, Kumbh Sans).
 
 ## What it does
 
-- **First launch:** pick your favourite districts. Change them later from **⋮ → Change districts**,
-  or add a district or a whole circle from **Search**.
-- **District page:** two tabs.
-  - **Complaints:** write a complaint right at the top, attach photos from the camera or gallery,
-    choose the whole district or one office, tap **Add**. Each complaint has comments, Share
-    (WhatsApp, email, with photos), Mark resolved and Delete with Undo.
-  - **Contacts:** grouped as Circle (SE), Divisions (XEN), Sub-divisions (AEN). Call button, and a
-    pencil to update the number ("Updated by you", with **Use Sugampath number** to undo).
-    **Add contact** for anyone not in the list.
-- **Office page:** Call, Complaint, Note, the number, and that office's complaints and notes.
-- **After a call:** coming back to the app offers **Add note**.
-- **Bottom tabs:** Districts, Contacts (every contact in one list, search by name, post, district or
-  number, **My districts** or **All**), Complaints (Open / Resolved, across all districts), Notes.
-- **Backup:** **⋮ → Back up data** saves one file with everything, photos included. Keep it on
-  WhatsApp or Drive. **⋮ → Restore backup** brings it back on a new phone.
+Laid out like a contacts app: search on top, a side menu (a drawer on phones), one card of people.
+
+- **First launch:** pick your districts. Change them from **Districts +** in the menu.
+- **Contact list:** round initials, name, phone, post, district. Starred people first, then by rank
+  (Top officers, DGM, Project Directors, Electrical/QC/Expressway, head office staff, yours).
+  Chips switch between **My districts**, **All** and each district; the menu also filters by group.
+  On a computer, Star and Edit appear only on the row under the mouse. Press **/** to search.
+- **Person page:** numbers (tap to call), post and district, Star and Edit. **Complaints and notes**
+  for that person: type a note and press Enter, start with **!** to log a complaint, or use
+  **Complaint with photos**. On phones: round Call, Note and Complaint buttons.
+- **Edit:** change a number ("edited" in the list, **Use the RSRDC number** to undo). Contacts you
+  add can be renamed or removed.
+- **Complaints page:** write one at the top (first line is the title), add photos from the camera
+  or gallery, pick the district and office. Open / Resolved, comments, Share (WhatsApp, email,
+  with photos), Mark resolved, Delete with Undo.
+- **Notes page**, and after a call the app offers **Add note**.
+- **Back up data / Restore backup** in the menu: one file with everything, photos included.
 
 ## Where data is kept
 
