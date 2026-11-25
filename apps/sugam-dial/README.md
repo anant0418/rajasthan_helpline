@@ -52,12 +52,28 @@ Construction Corpn., pwd.rajasthan.gov.in/rsrdc → Contact directory, PDF). The
 
 Office numbers the PDF prints incompletely (a lone STD code, or a number without one) are left out;
 only mobiles are kept for those. Anyone can correct a number on their phone with the pencil
-("Updated by you"), or add contacts of their own. Districts not in the list start empty.
+("Updated by you"), or add contacts of their own.
+
+### Government directories (`gov2020.json`, loaded after the first screen)
+
+About 2,290 more contacts from two scanned government phone directories, under **Directories** in the
+side menu:
+
+- **Secretariat directory** (file dated 20-05-2020): 1,945 entries, grouped by department, with
+  Sachivalaya intercom and 0141 office numbers.
+- **State directory**: the 7 Divisional Commissioners and Collectors of all 41 districts (including
+  the 2023 districts, so this part is newer than 2020), 253 heads of department, 39 Delhi offices
+  and 5 Vidhan Sabha numbers. Collectors also show up in their district.
+
+The copies had broken Hindi text, so names and posts were read with OCR and may be jumbled; numbers
+come from the PDF text and are more reliable. The person page says where each entry came from.
+Each row is `[id, level, dept, post, person, districts, numbers, source, page, rank]`.
 
 ## Files
 
 ```
 index.html             the whole app (HTML, CSS, JS)
+gov2020.json           government directory contacts
 manifest.webmanifest   install name and icons
 sw.js                  offline cache (bump VERSION when files change)
 icon.svg, icon-maskable.svg
