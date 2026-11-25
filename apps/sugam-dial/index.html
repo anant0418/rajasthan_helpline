@@ -72,7 +72,7 @@ h1.title small{font-size:14px;color:var(--text2)}
 .chip.on{border-color:transparent;background:var(--done);color:var(--on-done)}
 
 /* contact rows: table on desktop, list on phone */
-.thead,.crow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,.8fr) 88px;align-items:center;column-gap:8px}
+.thead,.crow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,.8fr) 88px;align-items:center;column-gap:8px}
 .thead{font-weight:500;padding:12px 8px;border-bottom:1px solid var(--line)}
 .sec{display:flex;align-items:center;gap:8px;padding:18px 8px 6px;font-size:12px;line-height:16px;font-weight:500;color:var(--text2)}
 .sec svg{fill:var(--text2)}
@@ -88,7 +88,7 @@ h1.title small{font-size:14px;color:var(--text2)}
 .crow .act{display:flex;justify-content:flex-end;gap:2px;visibility:hidden}
 .crow:hover .act,.crow:focus-within .act{visibility:visible}
 .crow .act .on{color:var(--blue);visibility:visible}
-.av{width:40px;height:40px;border-radius:999px;color:#fff;display:inline-grid;place-items:center;font-size:18px;flex:none}
+.av{width:40px;height:40px;border-radius:999px;color:#fff;display:inline-grid;place-items:center;font-size:18px;line-height:1;flex:none}
 .av.xl{width:120px;height:120px;font-size:52px}
 .empty{padding:40px 24px;text-align:center;color:var(--text2)}
 .fab{display:none}
@@ -490,8 +490,6 @@ function renderNav(){
    ${item('go','notes','Notes','note',S.notes.length||'',R.s==='notes',true)}
    <div class="nh"><span>Districts</span><button class="ib sm" data-a="mpick" aria-label="Choose districts">${ic('add','i s')}</button></div>
    ${favs.length?favs.map(d=>item('nav','d:'+d.id,d.name,'label',pool('d:'+d.id).length,f==='d:'+d.id&&!ui.q)).join(''):`<p class="small" style="padding:0 16px">Add your districts to see their contacts first.</p>`}
-   <div class="nh"><span>Groups</span></div>
-   ${['TOP','DGM','PD','SPL','HQ','Other'].filter(g=>allContacts().some(o=>o.level===g)).map(g=>item('nav','g:'+g,GNAME[g],'label',pool('g:'+g).length,f==='g:'+g&&!ui.q)).join('')}
    <div class="nh"><span>Your data</span></div>
    ${item('backup','','Back up data','backup','',false)}${item('restore','','Restore backup','restore','',false)}
    <p class="small" style="padding:12px 16px 0">${esc(SOURCE)}. Complaints, notes and photos stay on this device.</p>`;
@@ -502,8 +500,8 @@ function rowHtml(o){
   const n=ph(o);
   return `<div class="crow" role="link" tabindex="0" data-a="person" data-id="${esc(o.id)}">
    <div class="nm">${avatar(o)}<span><b>${esc(title(o))}</b><span class="sub">${esc(o.person?o.name:'')}${o.person?' · ':''}${esc(distLabel(o))}</span></span></div>
-   <div class="ph">${n?esc(n):'<span class="small">No number</span>'}${S.phones[o.id]!=null?'<span class="tag">edited</span>':''}</div>
    <div class="ps">${esc(o.person?o.name:'')}</div>
+   <div class="ph">${n?esc(n):'<span class="small">No number</span>'}${S.phones[o.id]!=null?'<span class="tag">edited</span>':''}</div>
    <div class="ds">${esc(distLabel(o))}</div>
    <div class="act"><button class="ib sm${isStar(o)?' on':''}" data-a="star" data-id="${esc(o.id)}" aria-label="${isStar(o)?'Unstar':'Star'} ${esc(title(o))}" aria-pressed="${isStar(o)}">${ic(isStar(o)?'star':'starO','i s')}</button><button class="ib sm" data-a="editp" data-id="${esc(o.id)}" aria-label="Edit ${esc(title(o))}">${ic('edit','i s')}</button></div>
   </div>`;
@@ -522,7 +520,7 @@ function vList(){
   if(!list.length)body=`<div class="empty">${q?'No contact matches that. Try a district, a post like “PD”, or part of a number.':f==='mine'?'None of your districts has a contact in the RSRDC list yet. Tap All to see everyone, or add a contact.':'No contacts here yet.'}</div>`;
   return `<h1 class="title">${head} <small>(${list.length})</small></h1>
   ${q?'':`<div class="chips">${chipF.map(x=>`<button class="chip${x===f?' on':''}" data-a="nav" data-v="${esc(x)}">${esc(x==='all'?'All':fName(x))}</button>`).join('')}</div>`}
-  <div class="thead" role="presentation"><span>Name</span><span>Phone</span><span>Post</span><span>District</span><span></span></div>
+  <div class="thead" role="presentation"><span>Name</span><span>Post</span><span>Phone</span><span>District</span><span></span></div>
   ${body}`;
 }
 
