@@ -90,7 +90,7 @@ svg.s{width:20px;height:20px}
 .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:1px solid var(--line);position:sticky;top:64px;background:var(--bg);z-index:4}
 .tab{height:48px;border:0;background:transparent;font-size:14px;font-weight:500;letter-spacing:.1px;color:var(--text2);border-bottom:2px solid transparent}
 .tab.on{color:var(--blue-text);border-bottom-color:var(--blue)}
-.nav{position:fixed;left:0;right:0;bottom:0;height:calc(80px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--surface);box-shadow:0 -1px 3px rgba(60,64,67,.15);z-index:10}
+.nav{position:fixed;left:0;right:0;bottom:0;height:calc(80px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);box-shadow:0 -1px 3px rgba(60,64,67,.15);z-index:10}
 .nav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:500;letter-spacing:.5px;color:var(--text2)}
 .nav button span.pill{width:64px;height:32px;border-radius:16px;display:grid;place-items:center}
 .nav button.on{color:var(--blue-text)}.nav button.on span.pill{background:var(--tint)}
@@ -371,6 +371,7 @@ function phoneEditor(o){
 }
 const targetSelect=(d,sel,id)=>`<select id="${id}" aria-label="Complaint is for">${[['','Whole district']].concat(offs(d).map(o=>[o.id,o.short])).map(([v,l])=>`<option value="${esc(v)}"${v===(sel||'')?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
 
+const contactRow=(o,showDist)=>ui.ep===o.id?phoneEditor(o):`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span>${o.person?`<span class="t2">${esc(o.person)}</span>`:''}<span class="t2">${ph(o)?esc(ph(o)):'No number yet'}${o.numbers.length>1?' · +'+(o.numbers.length-1)+' more':''}${showDist&&o.level!=='PD'&&o.level!=='HQ'?' · '+esc(o.region?o.dists.length+' districts':D.byId[o.distId].name):''}</span>${S.phones[o.id]!=null?'<span class="tag">Updated by you</span>':''}</button><button class="ib" data-a="editph" data-id="${esc(o.id)}" aria-label="Edit number for ${esc(o.short)}">${ic('edit','i s')}</button>${callBtn(o)}</div>`;
 /* ---------- screens ---------- */
 function vPick(){
   const sel=new Set(ui.pick||S.favs);ui.pick=[...sel];
@@ -383,7 +384,7 @@ function vPick(){
 
 function vHome(){
   const tab=R.tab||'districts';
-  const title={districts:'My districts',complaints:'My complaints',notes:'Notes'}[tab];
+  const title={districts:'My districts',contacts:'Contacts',complaints:'My complaints',notes:'Notes'}[tab];
   let body='';
   if(tab==='districts'){
     const favs=S.favs.map(id=>D.byId[id]).filter(Boolean);
@@ -393,6 +394,17 @@ function vHome(){
     ${favs.map(d=>{const o=offs(d).length,c=S.complaints.filter(x=>x.distId===d.id&&x.status==='open').length;
       return `<button class="card fav" data-a="dist" data-id="${d.id}"><span class="av">${esc(d.name[0])}</span><span style="flex:1"><span class="t1">${esc(d.name)}</span><span class="t2">${o?o+(o===1?' contact':' contacts'):'No contacts yet'}${c?' · '+c+' open':''}</span></span>${ic('chev')}</button>`}).join('')}
     <button class="ob" data-a="search" style="width:calc(100% - 32px);margin:0 16px;height:56px;border-style:dashed;display:flex;align-items:center;justify-content:center;gap:8px">${ic('add','i s')}Add district or DGM group</button>`;
+  }else if(tab==='contacts'){
+    const mine=S.favs.length>0&&(ui.cs||'mine')==='mine';
+    const q=(ui.cq||'').trim().toLowerCase();
+    const all=[...new Set(Object.values(D.offices))].filter(o=>!S.hidden.includes(o.id));
+    const pool=all.filter(o=>!mine||o.dists.some(i=>S.favs.includes(i))).filter(o=>!q||(o.name+' '+o.person+' '+o.dists.map(i=>D.byId[i].name).join(' ')+' '+o.numbers.map(x=>x.n).join(' ')+' '+ph(o)).toLowerCase().includes(q));
+    const byName=(a,b)=>a.name.localeCompare(b.name);
+    body=`<div class="search" style="cursor:text">${ic('search')}<label style="flex:1;display:flex"><span class="sr">Search contacts</span><input id="cq" value="${esc(ui.cq||'')}" placeholder="Name, post, district or number" autocomplete="off" style="flex:1;border:0;outline:0;background:transparent;font-size:16px;color:var(--text)"></label>${ui.cq?`<button class="ib" data-a="cqclear" aria-label="Clear search" style="margin-right:-12px">${ic('close')}</button>`:''}</div>
+    ${S.favs.length?`<div class="chips"><button class="chip${mine?' on':''}" data-a="cs" data-v="mine">My districts</button><button class="chip${mine?'':' on'}" data-a="cs" data-v="all">All</button></div>`:''}
+    <p class="t3" style="margin:0;padding:0 24px">${pool.length} ${pool.length===1?'contact':'contacts'} · ${esc(SOURCE)}</p>
+    ${GROUPS.map(([l,t])=>{const rows=pool.filter(o=>o.level===l).sort(l==='HQ'?()=>0:byName);if(!rows.length)return '';return `<h2 class="sh">${l==='DGM'?'DGM':t}</h2>`+rows.map(o=>contactRow(o,true)).join('')}).join('')}
+    ${pool.length?'':`<div class="empty">${q?'No contact matches “'+esc(ui.cq)+'”.':'No contacts in your districts yet. Tap All to see every contact.'}</div>`}`;
   }else if(tab==='complaints'){
     const f=ui.cf||'open';const list=S.complaints.filter(c=>c.status===f);
     body=`<div class="chips"><button class="chip${f==='open'?' on':''}" data-a="cf" data-v="open">Open</button><button class="chip${f==='resolved'?' on':''}" data-a="cf" data-v="resolved">Resolved</button></div>
@@ -400,7 +412,7 @@ function vHome(){
   }else{
     body=S.notes.length?`<div style="padding-top:4px">${S.notes.map(n=>`<button class="ocard note" data-a="${n.officeId?'office':'dist'}" data-id="${esc(n.officeId||n.distId)}"><p>${esc(n.text)}</p><span class="t3">${esc(where(n))} · ${esc(when(n.at))}</span></button>`).join('')}</div>`:`<div class="empty">Notes you add to an office show up here. After a call, tap Add note.</div>`;
   }
-  const tabs=[['districts','Districts','pin'],['complaints','Complaints','report'],['notes','Notes','note']];
+  const tabs=[['districts','Districts','pin'],['contacts','Contacts','person'],['complaints','Complaints','report'],['notes','Notes','note']];
   return bar(title,{left:'logo',brand:true,right:`<button class="ib" data-a="menu" aria-label="More options" aria-haspopup="menu" style="margin-right:-4px">${ic('more')}</button>`})+body+
   `<nav class="nav" aria-label="Sections">${tabs.map(([id,l,i])=>`<button class="${tab===id?'on':''}" data-a="tab" data-v="${id}" aria-current="${tab===id?'page':'false'}"><span class="pill">${ic(i)}</span>${l}</button>`).join('')}</nav>`;
 }
@@ -451,7 +463,7 @@ function vDist(){
     body=`<p class="t3" style="margin:0;padding:12px 24px 0">${esc(SOURCE)}. Pencil to update a number.</p>
     ${levels.length>1?`<div class="chips" style="padding-top:12px">${levels.map(l=>`<button class="chip${lv===l?' on':''}" data-a="lv" data-v="${l}">${l==='All'?'All':chipName[l]}</button>`).join('')}</div>`:''}
     ${GROUPS.filter(([l])=>lv==='All'||lv===l).map(([l,t])=>{const rows=os.filter(o=>o.level===l);if(!rows.length)return '';
-      return `<h2 class="sh">${t}</h2>`+rows.map(o=>ui.ep===o.id?phoneEditor(o):`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span>${o.person?`<span class="t2">${esc(o.person)}</span>`:''}<span class="t2">${ph(o)?esc(ph(o)):'No number yet'}${o.numbers.length>1?' · +'+(o.numbers.length-1)+' more':''}</span>${S.phones[o.id]!=null?'<span class="tag">Updated by you</span>':''}</button><button class="ib" data-a="editph" data-id="${esc(o.id)}" aria-label="Edit number for ${esc(o.short)}">${ic('edit','i s')}</button>${callBtn(o)}</div>`).join('')}).join('')}
+      return `<h2 class="sh">${t}</h2>`+rows.map(o=>contactRow(o,false)).join('')}).join('')}
     ${os.length?'':`<div class="empty">No contacts in ${esc(d.name)} yet.</div>`}
     ${ui.addc?`<div class="edit"><div class="t1">New contact in ${esc(d.name)}</div>
       <label class="field"><span>Office or person</span><input id="ncName" placeholder="e.g. XEN, PWD Division II" autocomplete="off"></label>
@@ -616,6 +628,8 @@ const A={
   cpost:(el)=>{const id=el.dataset.id;const txt=((ui.cd||{})[id]||'').trim();if(!txt)return;const c=S.complaints.find(x=>x.id==id);c.comments.push({text:txt,at:Date.now()});save();ui.cd[id]='';const y=scrollY;render();scrollTo(0,y)},
   cshare:(el)=>shareComplaint(S.complaints.find(x=>x.id==el.dataset.id)),
   cf:(el)=>{ui.cf=el.dataset.v;render()},
+  cs:(el)=>{ui.cs=el.dataset.v;render()},
+  cqclear:()=>{ui.cq='';render();document.getElementById('cq')?.focus()},
   view:(el)=>viewPhoto(el.dataset.id,el.dataset.owner)
 };
 document.addEventListener('click',e=>{
@@ -624,7 +638,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('input',e=>{
   const t=e.target;
-  if(t.id==='q'){ui.q=t.value;const pos=t.selectionStart;render();const n=document.getElementById('q');n.focus();n.setSelectionRange(pos,pos)}
+  if(t.id==='q'||t.id==='cq'){ui[t.id]=t.value;const pos=t.selectionStart,id=t.id,y=scrollY;render();scrollTo(0,y);const n=document.getElementById(id);n.focus();n.setSelectionRange(pos,pos)}
   else if(t.id==='ctext'){ui.ct=t.value;t.rows=t.value?3:1}
   else if(t.id==='cto')ui.cto=t.value;
   else if(t.id==='fSubj')ui.fs=t.value;else if(t.id==='fDet')ui.fd=t.value;else if(t.id==='nText')ui.nt=t.value;

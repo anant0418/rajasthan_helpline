@@ -24,7 +24,8 @@ Material Design 2 look (Notes design system, Kumbh Sans).
     **Add contact** for anyone not in the list.
 - **Office page:** Call, Complaint, Note, the number, and that office's complaints and notes.
 - **After a call:** coming back to the app offers **Add note**.
-- **Bottom tabs:** Districts, Complaints (Open / Resolved, across all districts), Notes.
+- **Bottom tabs:** Districts, Contacts (every contact in one list, search by name, post, district or
+  number, **My districts** or **All**), Complaints (Open / Resolved, across all districts), Notes.
 - **Backup:** **⋮ → Back up data** saves one file with everything, photos included. Keep it on
   WhatsApp or Drive. **⋮ → Restore backup** brings it back on a new phone.
 
