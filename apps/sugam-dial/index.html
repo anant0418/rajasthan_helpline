@@ -198,25 +198,29 @@ const REGIONS={
   'DGM Kota':['Tonk','Baran'],
   'DGM (Admin)':['Sawai Madhopur','Jhunjhunu']
 };
-const GROUPS=[['PD','Project Directors'],['DGM','DGM for this region'],['SPL','Electrical, QC and Expressway'],['HQ','Head office, Jaipur'],['Other','Added by you']];
+const GROUPS=[['TOP','Top officers'],['DGM','DGM'],['PD','Project Directors'],['SPL','Electrical, QC and Expressway'],['HQ','Head office staff'],['Other','Added by you']];
+/* Higher rank first. Same rank keeps the list's own order (PDs: by district). */
+const RANK=[[/^Chairman/,1],[/^Vice Chairman/,2],[/^Managing Director/,3],[/^(CFO|General Manager|Chief Architect)/,4],[/^CPM/,5],[/^DGM/,6],[/^PD/,7],[/^(Sr\. A\.O|Consultant)/,8],[/^Manager/,9],[/^PA/,10]];
+const rankOf=name=>{for(const [re,r] of RANK)if(re.test(name))return r;return 11};
+const byRank=(a,b)=>a.rank-b.rank||(a.level==='PD'||a.level==='SPL'?a.name.localeCompare(b.name):a.idx-b.idx);
 /* [group, designation, name, districts, mobile(s), office, ext, region-of-DGM] */
 const CONTACTS=[
 ['HQ','Head office EPABX','RSRDC, Setu Bhawan, Jaipur',['Jaipur'],'',EPABX],
 ['HQ','Toll free','RSRDC helpline',['Jaipur'],'','1800 891 4171'],
-['HQ','Chairman',"Hon'ble Dy. CM Diya Kumari",['Jaipur'],'','0141 3506301',301],
-['HQ','Vice Chairman','Sh. Praveen Gupta',['Jaipur'],'','0141 2227807',301],
+['TOP','Chairman',"Hon'ble Dy. CM Diya Kumari",['Jaipur'],'','0141 3506301',301],
+['TOP','Vice Chairman','Sh. Praveen Gupta',['Jaipur'],'','0141 2227807',301],
 ['HQ','PA (RSRDC)','Sh. Suresh Kumar',['Jaipur'],'97850 24296','0141 3506301',301],
-['HQ','Managing Director','Sh. Satayendra Singh',['Jaipur'],'94140 81373','0141 3506303',302],
+['TOP','Managing Director','Sh. Satayendra Singh',['Jaipur'],'94140 81373','0141 3506303',302],
 ['HQ','PA to MD','Sh. Suresh Kumar',['Jaipur'],'97850 24296','0141 3506303',303],
-['HQ','CFO','Sh. Krishn Kanhaiya Meena',['Jaipur'],'94142 97751','0141 3506332',320],
-['HQ','Chief Architect','Sh. Jitendra Purohit',['Jaipur'],'94142 41688','0141 3506310',310],
-['HQ','General Manager','Sh. Neeraj Jain',['Jaipur'],'79769 28813','0141 3506357',357],
-['HQ','CPM-I','Sh. Sangeet Kumar',['Jaipur'],'94140 17384','0141 3506399',304],
-['HQ','CPM-II','Sh. Davendra Kr. Gupta',['Jaipur'],'90015 52211','0141 3506307',306],
+['TOP','CFO','Sh. Krishn Kanhaiya Meena',['Jaipur'],'94142 97751','0141 3506332',320],
+['TOP','Chief Architect','Sh. Jitendra Purohit',['Jaipur'],'94142 41688','0141 3506310',310],
+['TOP','General Manager','Sh. Neeraj Jain',['Jaipur'],'79769 28813','0141 3506357',357],
+['TOP','CPM-I','Sh. Sangeet Kumar',['Jaipur'],'94140 17384','0141 3506399',304],
+['TOP','CPM-II','Sh. Davendra Kr. Gupta',['Jaipur'],'90015 52211','0141 3506307',306],
 ['HQ','PA (GM / CPM)','',['Jaipur'],'','0141 3506307',357],
-['HQ','DGM (Electrical), Jaipur','Sh. Pankaj Garg',['Jaipur'],'98292 70949','0141 3506356',356],
-['HQ','DGM (Expressway)','Sh. Girish Jain',['Jaipur'],'94686 80799','0141 3506311',311],
-['HQ','DGM (Legal)','Sh. S. C. Katara',['Jaipur'],'94143 15101','0141 3506364',363],
+['DGM','DGM (Electrical), Jaipur','Sh. Pankaj Garg',['Jaipur'],'98292 70949','0141 3506356',356],
+['DGM','DGM (Expressway)','Sh. Girish Jain',['Jaipur'],'94686 80799','0141 3506311',311],
+['DGM','DGM (Legal)','Sh. S. C. Katara',['Jaipur'],'94143 15101','0141 3506364',363],
 ['HQ','Sr. A.O. (T)','Sh. Gyan Singh Khuswaha',['Jaipur'],'98280 78178','0141 3506384',384],
 ['HQ','Sr. A.O. (P)','Sh. Madhu Sudan Sharma',['Jaipur'],'94146 46404','0141 3506398',398],
 ['HQ','Sr. A.O. Pension','Sh. Mukesh Avatar',['Jaipur'],'79761 32838','0141 3506368',368],
@@ -282,7 +286,7 @@ CONTACTS.forEach(([level,name,person,dists,mob,office,ext,region],i)=>{
   (mob||'').split(',').map(s=>s.trim()).filter(Boolean).forEach((n,k)=>numbers.push({label:k?'Mobile (2)':'Mobile',n}));
   if(office)numbers.push({label:'Office',n:office});
   else if(ext)numbers.push({label:'Head office, ext. '+ext,n:EPABX});
-  const o={id:'r'+i,distId:ids[0],dists:ids,level,name,person:person||'',short:name,numbers,phone:numbers[0]?numbers[0].n:'',ext:ext||0,region:region||null};
+  const o={id:'r'+i,idx:i,rank:rankOf(name),distId:ids[0],dists:ids,level,name,person:person||'',short:name,numbers,phone:numbers[0]?numbers[0].n:'',ext:ext||0,region:region||null};
   D.offices[o.id]=o;ids.forEach(id=>D.byId[id].offices.push(o));
 });
 
@@ -296,7 +300,7 @@ const nid=()=>S.seq++;
 function rebuildCustom(){
   D.list.forEach(d=>{d.offices=d.offices.filter(o=>!o.custom)});
   Object.keys(D.offices).forEach(k=>{if(D.offices[k].custom)delete D.offices[k]});
-  S.custom.forEach(o=>{const c=Object.assign({custom:true,person:''},o);c.level='Other';c.dists=[c.distId];c.numbers=c.phone?[{label:'Phone',n:c.phone}]:[];D.offices[c.id]=c;D.byId[c.distId]&&D.byId[c.distId].offices.push(c)});
+  S.custom.forEach(o=>{const c=Object.assign({custom:true,person:''},o);c.level='Other';c.rank=12;c.idx=999;c.dists=[c.distId];c.numbers=c.phone?[{label:'Phone',n:c.phone}]:[];D.offices[c.id]=c;D.byId[c.distId]&&D.byId[c.distId].offices.push(c)});
 }
 rebuildCustom();
 const offs=d=>d.offices.filter(o=>!S.hidden.includes(o.id));
@@ -371,7 +375,7 @@ function phoneEditor(o){
 }
 const targetSelect=(d,sel,id)=>`<select id="${id}" aria-label="Complaint is for">${[['','Whole district']].concat(offs(d).map(o=>[o.id,o.short])).map(([v,l])=>`<option value="${esc(v)}"${v===(sel||'')?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
 
-const contactRow=(o,showDist)=>ui.ep===o.id?phoneEditor(o):`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span>${o.person?`<span class="t2">${esc(o.person)}</span>`:''}<span class="t2">${ph(o)?esc(ph(o)):'No number yet'}${o.numbers.length>1?' · +'+(o.numbers.length-1)+' more':''}${showDist&&o.level!=='PD'&&o.level!=='HQ'?' · '+esc(o.region?o.dists.length+' districts':D.byId[o.distId].name):''}</span>${S.phones[o.id]!=null?'<span class="tag">Updated by you</span>':''}</button><button class="ib" data-a="editph" data-id="${esc(o.id)}" aria-label="Edit number for ${esc(o.short)}">${ic('edit','i s')}</button>${callBtn(o)}</div>`;
+const contactRow=(o,showDist)=>ui.ep===o.id?phoneEditor(o):`<div class="row"><button class="main" data-a="office" data-id="${esc(o.id)}"><span class="t1">${esc(o.name)}</span>${o.person?`<span class="t2">${esc(o.person)}</span>`:''}<span class="t2">${ph(o)?esc(ph(o)):'No number yet'}${o.numbers.length>1?' · +'+(o.numbers.length-1)+' more':''}${showDist&&o.region?' · '+o.dists.length+' districts':''}</span>${S.phones[o.id]!=null?'<span class="tag">Updated by you</span>':''}</button><button class="ib" data-a="editph" data-id="${esc(o.id)}" aria-label="Edit number for ${esc(o.short)}">${ic('edit','i s')}</button>${callBtn(o)}</div>`;
 /* ---------- screens ---------- */
 function vPick(){
   const sel=new Set(ui.pick||S.favs);ui.pick=[...sel];
@@ -399,11 +403,10 @@ function vHome(){
     const q=(ui.cq||'').trim().toLowerCase();
     const all=[...new Set(Object.values(D.offices))].filter(o=>!S.hidden.includes(o.id));
     const pool=all.filter(o=>!mine||o.dists.some(i=>S.favs.includes(i))).filter(o=>!q||(o.name+' '+o.person+' '+o.dists.map(i=>D.byId[i].name).join(' ')+' '+o.numbers.map(x=>x.n).join(' ')+' '+ph(o)).toLowerCase().includes(q));
-    const byName=(a,b)=>a.name.localeCompare(b.name);
     body=`<div class="search" style="cursor:text">${ic('search')}<label style="flex:1;display:flex"><span class="sr">Search contacts</span><input id="cq" value="${esc(ui.cq||'')}" placeholder="Name, post, district or number" autocomplete="off" style="flex:1;border:0;outline:0;background:transparent;font-size:16px;color:var(--text)"></label>${ui.cq?`<button class="ib" data-a="cqclear" aria-label="Clear search" style="margin-right:-12px">${ic('close')}</button>`:''}</div>
     ${S.favs.length?`<div class="chips"><button class="chip${mine?' on':''}" data-a="cs" data-v="mine">My districts</button><button class="chip${mine?'':' on'}" data-a="cs" data-v="all">All</button></div>`:''}
     <p class="t3" style="margin:0;padding:0 24px">${pool.length} ${pool.length===1?'contact':'contacts'} · ${esc(SOURCE)}</p>
-    ${GROUPS.map(([l,t])=>{const rows=pool.filter(o=>o.level===l).sort(l==='HQ'?()=>0:byName);if(!rows.length)return '';return `<h2 class="sh">${l==='DGM'?'DGM':t}</h2>`+rows.map(o=>contactRow(o,true)).join('')}).join('')}
+    ${GROUPS.map(([l,t])=>{const rows=pool.filter(o=>o.level===l).sort(byRank);if(!rows.length)return '';return `<h2 class="sh">${t}</h2>`+rows.map(o=>contactRow(o,true)).join('')}).join('')}
     ${pool.length?'':`<div class="empty">${q?'No contact matches “'+esc(ui.cq)+'”.':'No contacts in your districts yet. Tap All to see every contact.'}</div>`}`;
   }else if(tab==='complaints'){
     const f=ui.cf||'open';const list=S.complaints.filter(c=>c.status===f);
@@ -457,12 +460,12 @@ function vDist(){
     ${list.length?list.map(c=>compCard(c,false)).join(''):`<div class="empty">No complaints in ${esc(d.name)} yet.</div>`}`;
   }else{
     const lv=ui.lv||'All';const os=offs(d);
-    const chipName={PD:'Project Directors',DGM:'DGM',SPL:'Electrical, QC',HQ:'Head office',Other:'Mine'};
+    const chipName={TOP:'Top officers',PD:'Project Directors',DGM:'DGM',SPL:'Electrical, QC',HQ:'Staff',Other:'Mine'};
     const present=GROUPS.filter(([l])=>os.some(o=>o.level===l));
     const levels=['All'].concat(present.length>1?present.map(g=>g[0]):[]);
     body=`<p class="t3" style="margin:0;padding:12px 24px 0">${esc(SOURCE)}. Pencil to update a number.</p>
     ${levels.length>1?`<div class="chips" style="padding-top:12px">${levels.map(l=>`<button class="chip${lv===l?' on':''}" data-a="lv" data-v="${l}">${l==='All'?'All':chipName[l]}</button>`).join('')}</div>`:''}
-    ${GROUPS.filter(([l])=>lv==='All'||lv===l).map(([l,t])=>{const rows=os.filter(o=>o.level===l);if(!rows.length)return '';
+    ${GROUPS.filter(([l])=>lv==='All'||lv===l).map(([l,t])=>{const rows=os.filter(o=>o.level===l).sort(byRank);if(!rows.length)return '';
       return `<h2 class="sh">${t}</h2>`+rows.map(o=>contactRow(o,false)).join('')}).join('')}
     ${os.length?'':`<div class="empty">No contacts in ${esc(d.name)} yet.</div>`}
     ${ui.addc?`<div class="edit"><div class="t1">New contact in ${esc(d.name)}</div>
